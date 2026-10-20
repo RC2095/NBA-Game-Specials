@@ -1,0 +1,55 @@
+name: Refresh team foul data
+
+# Runs the same refresh as the Colab cell, once a day, and saves the result to
+# site/team_fouls.js. Netlify (or the Pages deploy below) then republishes the
+# site, so every visit opens with current numbers.
+#
+# One-time setup: repo Settings > Actions > General > Workflow permissions >
+# "Read and write permissions".
+on:
+  schedule:
+    - cron: "17 9 * * *"   # 09:17 UTC, early morning in New York
+  workflow_dispatch:        # the "Run workflow" button in the Actions tab
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: refresh-team-fouls
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: pip install duckdb pandas
+      - name: Download game logs and rebuild the team table
+        run: python tools/refresh_team_fouls.py --out site/team_fouls.js
+      - name: Check the file before saving it
+        run: node tools/check_team_fouls_file.js
+      - name: Save and redeploy if anything changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- site/team_fouls.js; then
+            echo "No change in the team data."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/team_fouls.js
+          git commit -m "Refresh team foul data"
+          git push
+          # A push made with the built-in token does not start other workflows,
+          # so start the GitHub Pages deploy directly. (Harmless if you use Netlify
+          # only: it fails fast because Pages is not set up, and Netlify rebuilds
+          # from the push on its own.)
+          gh workflow run pages.yml || echo "Pages deploy not started (fine if you use Netlify)."
