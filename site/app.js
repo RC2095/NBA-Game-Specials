@@ -65,9 +65,10 @@
   // ------------------------------------------------------------
   // margin (shared by every tab)
   // ------------------------------------------------------------
-  function readMargin() {
-    const raw = $("margin").value.trim();
-    const mode = $("margin-mode").value;
+  // Each tab has its own margin box: ids m-<tab> and mm-<tab>.
+  function readMargin(tab) {
+    const raw = $("m-" + tab).value.trim();
+    const mode = $("mm-" + tab).value;
     if (raw === "") return { value: null, mode: mode, error: null };
     const v = Number(raw);
     if (!Number.isFinite(v) || v < 0) {
@@ -349,7 +350,7 @@
   function recomputeAny() {
     renderChips();
     syncModeControls();
-    const margin = readMargin();
+    const margin = readMargin("any");
     const out = computeAny();
     const msgs = $("messages");
     const res = $("results");
@@ -486,7 +487,7 @@
   }
 
   function recomputeQuarters() {
-    const margin = readMargin();
+    const margin = readMargin("team");
     const msgs = $("qmessages"), res = $("qresults");
     clear(msgs); clear(res);
     if (margin.error) msgs.appendChild(callout("warn", margin.error));
@@ -571,7 +572,7 @@
   // DOUBLE / TRIPLE DOUBLE
   // ============================================================
   function recomputeDirect() {
-    const margin = readMargin();
+    const margin = readMargin("direct");
     const msgs = $("dmessages"), res = $("dresults");
     clear(msgs); clear(res);
     if (margin.error) msgs.appendChild(callout("warn", margin.error));
@@ -637,7 +638,7 @@
   // FOUL-OUT
   // ============================================================
   function recomputeFoul() {
-    const margin = readMargin();
+    const margin = readMargin("foul");
     const msgs = $("fmessages"), res = $("fresults");
     clear(msgs); clear(res);
     if (margin.error) msgs.appendChild(callout("warn", margin.error));
@@ -763,8 +764,10 @@
   // margin changes redraw everything
   // ============================================================
   function recomputeAll() { recomputeAny(); recomputeQuarters(); recomputeDirect(); recomputeFoul(); recomputeRare(); }
-  $("margin").addEventListener("input", recomputeAll);
-  $("margin-mode").addEventListener("change", recomputeAll);
+  [["any", recomputeAny], ["team", recomputeQuarters], ["direct", recomputeDirect], ["foul", recomputeFoul]].forEach((t) => {
+    $("m-" + t[0]).addEventListener("input", t[1]);
+    $("mm-" + t[0]).addEventListener("change", t[1]);
+  });
 
   recomputeAll();
 })();

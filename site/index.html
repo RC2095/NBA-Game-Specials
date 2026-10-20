@@ -185,16 +185,6 @@ footer { margin-top: 40px; font-size: 14px; color: var(--ink-soft); border-top: 
 <div class="wrap">
   <header>
     <h1>NBA Game Specials</h1>
-    <div class="margin-box">
-      <span class="label" id="margin-label">Margin on the quoted price</span>
-      <div class="row">
-        <input id="margin" type="number" min="0" step="0.5" value="3" inputmode="decimal" aria-labelledby="margin-label">
-        <select id="margin-mode" aria-label="Margin type">
-          <option value="relative">% of fair probability</option>
-          <option value="pp">percentage points</option>
-        </select>
-      </div>
-    </div>
   </header>
 
   <nav role="tablist" aria-label="Markets">
@@ -207,6 +197,16 @@ footer { margin-top: 40px; font-size: 14px; color: var(--ink-soft); border-top: 
 
   <!-- ANY PLAYER -->
   <section class="panel" id="panel-any" role="tabpanel" aria-labelledby="tab-any">
+    <div class="margin-box" style="margin-bottom:16px">
+      <span class="label" id="m-any-label">Margin on the quoted price</span>
+      <div class="row">
+        <input id="m-any" type="number" min="0" step="0.5" value="3" inputmode="decimal" aria-labelledby="m-any-label">
+        <select id="mm-any" aria-label="Margin type">
+          <option value="relative">% of fair probability</option>
+          <option value="pp">percentage points</option>
+        </select>
+      </div>
+    </div>
     <div class="grid">
       <div class="stack">
         <div>
@@ -250,6 +250,16 @@ footer { margin-top: 40px; font-size: 14px; color: var(--ink-soft); border-top: 
 
   <!-- TEAM TOTALS -->
   <section class="panel" id="panel-team" role="tabpanel" aria-labelledby="tab-team" hidden>
+    <div class="margin-box" style="margin-bottom:16px">
+      <span class="label" id="m-team-label">Margin on the quoted price</span>
+      <div class="row">
+        <input id="m-team" type="number" min="0" step="0.5" value="3" inputmode="decimal" aria-labelledby="m-team-label">
+        <select id="mm-team" aria-label="Margin type">
+          <option value="relative">% of fair probability</option>
+          <option value="pp">percentage points</option>
+        </select>
+      </div>
+    </div>
     <div id="tmode-quarters">
       <div class="stack">
         <p class="hint" style="margin:0">Prices a team to reach a score through the first 3 quarters, such as 100+. Enter each quarter's total and spread with both sides' prices. The spread is the home team's, with its sign: home -1.5, or home +0.5. Add Q4 and each team's full-game total to correct the averages.</p>
@@ -269,6 +279,17 @@ footer { margin-top: 40px; font-size: 14px; color: var(--ink-soft); border-top: 
 
   <!-- DOUBLE / TRIPLE -->
   <section class="panel" id="panel-direct" role="tabpanel" aria-labelledby="tab-direct" hidden>
+    <div class="margin-box" style="margin-bottom:16px">
+      <span class="label" id="m-direct-label">Margin on the quoted price</span>
+      <div class="row">
+        <input id="m-direct" type="number" min="0" step="0.5" value="0" inputmode="decimal" aria-labelledby="m-direct-label">
+        <select id="mm-direct" aria-label="Margin type">
+          <option value="relative">% of fair probability</option>
+          <option value="pp">percentage points</option>
+        </select>
+      </div>
+      <p class="hint" style="margin:0">Starts at 0 because the Yes prices already carry the book's margin, so more on top counts it twice.</p>
+    </div>
     <div class="grid">
       <div class="stack">
         <div>
@@ -296,6 +317,16 @@ footer { margin-top: 40px; font-size: 14px; color: var(--ink-soft); border-top: 
 
   <!-- FOUL-OUT -->
   <section class="panel" id="panel-foul" role="tabpanel" aria-labelledby="tab-foul" hidden>
+    <div class="margin-box" style="margin-bottom:16px">
+      <span class="label" id="m-foul-label">Margin on the quoted price</span>
+      <div class="row">
+        <input id="m-foul" type="number" min="0" step="0.5" value="3" inputmode="decimal" aria-labelledby="m-foul-label">
+        <select id="mm-foul" aria-label="Margin type">
+          <option value="relative">% of fair probability</option>
+          <option value="pp">percentage points</option>
+        </select>
+      </div>
+    </div>
     <div class="grid">
       <div class="stack">
         <div>
