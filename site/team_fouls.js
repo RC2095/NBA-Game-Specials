@@ -1,5 +1,5 @@
-// Team foul data for the Foul-out tab, from the refresh cell (tools/refresh_team_fouls.py).
-// Replace this block with a fresh one before each slate. As of the date below.
+// Team foul data for the Foul-out tab, written by tools/refresh_team_fouls.py
+// (a scheduled GitHub workflow runs it daily). Do not edit by hand.
 // Note: "season" is the notebook's season_to_date_pf, which does not reset between
 // seasons (its season key is the first 4 characters of game_id, the same for every
 // regular season), so with these files it averages every game since 2024-25.
