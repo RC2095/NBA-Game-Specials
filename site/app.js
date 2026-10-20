@@ -632,6 +632,7 @@
   }
   document.querySelectorAll('input[name="dmarket"]').forEach((r) => r.addEventListener("change", recomputeDirect));
   $("dpaste").addEventListener("input", recomputeDirect);
+  $("dclear").addEventListener("click", () => { $("dpaste").value = ""; recomputeDirect(); $("dpaste").focus(); });
   $("dbook").addEventListener("input", recomputeDirect);
 
   // ============================================================
