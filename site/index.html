@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>NBA Game Specials</title>
+<meta name="description" content="Price NBA prop markets from Over/Under lines: any-player milestones, double-doubles and foul-outs.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #eef0ee;
+  --surface: #f9faf8;
+  --ink: #17212b;
+  --ink-soft: #55616d;
+  --rule: #cfd5d2;
+  --fair: #0b6a68;
+  --fair-bg: #dbeeec;
+  --quote: #9a6200;
+  --quote-bg: #f6e6c4;
+  --good: #0b6a68;
+  --bad: #b23a2a;
+  --warn-bg: #f6e6c4;
+  --err-bg: #f4d9d4;
+  --focus: #1b5fd1;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #12181d;
+    --surface: #1a232a;
+    --ink: #e6ebe8;
+    --ink-soft: #9aa7ae;
+    --rule: #2f3b43;
+    --fair: #5cc9c3;
+    --fair-bg: #173a39;
+    --quote: #e8b04a;
+    --quote-bg: #3a2c10;
+    --good: #5cc9c3;
+    --bad: #ef8d7e;
+    --warn-bg: #3a2c10;
+    --err-bg: #43211b;
+    --focus: #7aa8ff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #12181d;
+  --surface: #1a232a;
+  --ink: #e6ebe8;
+  --ink-soft: #9aa7ae;
+  --rule: #2f3b43;
+  --fair: #5cc9c3;
+  --fair-bg: #173a39;
+  --quote: #e8b04a;
+  --quote-bg: #3a2c10;
+  --good: #5cc9c3;
+  --bad: #ef8d7e;
+  --warn-bg: #3a2c10;
+  --err-bg: #43211b;
+  --focus: #7aa8ff;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Familjen Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 24px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 32px; padding-bottom: 16px; border-bottom: 2px solid var(--ink); }
+h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+.margin-box { display: flex; flex-direction: column; gap: 4px; }
+.margin-box .row { display: flex; gap: 8px; }
+label, .label { font-size: 14px; font-weight: 600; color: var(--ink-soft); }
+input, select, textarea {
+  font: inherit; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--rule); border-radius: 6px; padding: 8px 10px;
+}
+input[type="number"] { width: 110px; }
+select { padding-right: 28px; }
+textarea { width: 100%; min-height: 220px; resize: vertical; line-height: 1.4; }
+textarea.short { min-height: 104px; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+.hint { font-size: 14px; color: var(--ink-soft); margin: 4px 0 0; max-width: 62ch; }
+
+nav[role="tablist"] { display: flex; gap: 20px; margin-top: 16px; border-bottom: 1px solid var(--rule); overflow-x: auto; }
+nav button {
+  font: inherit; font-weight: 600; background: none; border: 0; padding: 10px 0;
+  color: var(--ink-soft); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1px; white-space: nowrap;
+}
+nav button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+
+section.panel { padding-top: 20px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+.stack { display: flex; flex-direction: column; gap: 16px; }
+.seg { display: flex; flex-wrap: wrap; gap: 8px; }
+.seg label {
+  display: inline-flex; align-items: center; gap: 6px; font-weight: 500; color: var(--ink);
+  border: 1px solid var(--rule); background: var(--surface); border-radius: 6px; padding: 6px 12px; cursor: pointer;
+}
+.seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.seg label:has(input:checked) { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.seg label:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 1px; }
+.seg label.disabled { opacity: .45; cursor: not-allowed; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chips input[type="number"] { width: 100px; }
+button.plain {
+  font: inherit; font-weight: 600; background: var(--surface); color: var(--ink);
+  border: 1px solid var(--rule); border-radius: 6px; padding: 7px 12px; cursor: pointer;
+}
+button.plain:hover { border-color: var(--ink); }
+
+.callout { border-radius: 6px; padding: 10px 12px; font-size: 14px; }
+.callout.err { background: var(--err-bg); }
+.callout.warn { background: var(--warn-bg); }
+.callout.ok { background: var(--fair-bg); }
+.callout ul { margin: 6px 0 0; padding-left: 18px; }
+.callout p { margin: 0; }
+.empty { color: var(--ink-soft); padding: 24px 0; }
+
+.board { overflow-x: auto; margin-top: 20px; background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; }
+table { border-collapse: collapse; width: 100%; min-width: 640px; }
+th, td { text-align: right; padding: 10px 12px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font-size: 14px; font-weight: 600; color: var(--ink-soft); }
+tbody tr:last-child td { border-bottom: 0; }
+td.thr { font-size: 20px; font-weight: 700; }
+td.prob { font-size: 16px; }
+td.fair, td.quote { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+td.fair { color: var(--fair); background: var(--fair-bg); }
+td.quote { color: var(--quote); background: var(--quote-bg); }
+td input { width: 92px; text-align: right; padding: 5px 8px; }
+input[type="text"] { width: 110px; }
+td input[type="text"] { width: 92px; }
+.pos { color: var(--good); font-weight: 600; }
+.neg { color: var(--bad); font-weight: 600; }
+.dim { color: var(--ink-soft); }
+.flag { font-size: 13px; color: var(--quote); font-weight: 600; display: block; white-space: normal; max-width: 11em; margin-left: auto; line-height: 1.2; }
+
+details { margin-top: 16px; }
+summary { cursor: pointer; font-weight: 600; }
+details .board { margin-top: 8px; }
+.notes { margin: 16px 0 0; padding-left: 18px; font-size: 14px; color: var(--ink-soft); max-width: 80ch; }
+.notes li { margin: 4px 0; }
+
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 16px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px; }
+.big { padding: 12px 14px; border-radius: 6px; }
+.big .k { font-size: 14px; font-weight: 600; }
+.big .v { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+.big.fair { background: var(--fair-bg); color: var(--fair); }
+.big.quote { background: var(--quote-bg); color: var(--quote); }
+dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 16px 0 0; }
+dt { color: var(--ink-soft); }
+dd { margin: 0; text-align: right; font-weight: 600; }
+.status { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 14px; font-weight: 700; }
+.status.PASS { background: var(--fair-bg); color: var(--fair); }
+.status.FAIR_OR_BORDERLINE { background: var(--quote-bg); color: var(--quote); }
+.status.NO_EDGE { background: var(--err-bg); color: var(--bad); }
+footer { margin-top: 40px; font-size: 14px; color: var(--ink-soft); border-top: 1px solid var(--rule); padding-top: 16px; max-width: 80ch; }
+@media (max-width: 600px) {
+  table { min-width: 0; }
+  th, td { padding: 9px 7px; }
+  th { font-size: 13px; }
+  td.thr { font-size: 17px; }
+  td.prob { font-size: 14px; }
+  td.fair, td.quote { font-size: 17px; }
+  .big .v { font-size: 28px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .board { transition: opacity .12s; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>NBA Game Specials</h1>
+    <div class="margin-box">
+      <span class="label" id="margin-label">Margin on the quoted price</span>
+      <div class="row">
+        <input id="margin" type="number" min="0" step="0.5" value="3" inputmode="decimal" aria-labelledby="margin-label">
+        <select id="margin-mode" aria-label="Margin type">
+          <option value="relative">% of fair probability</option>
+          <option value="pp">percentage points</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <nav role="tablist" aria-label="Markets">
+    <button role="tab" id="tab-any" aria-selected="true" aria-controls="panel-any">Any player</button>
+    <button role="tab" id="tab-team" aria-selected="false" aria-controls="panel-team" tabindex="-1">Team totals</button>
+    <button role="tab" id="tab-direct" aria-selected="false" aria-controls="panel-direct" tabindex="-1">Double / triple double</button>
+    <button role="tab" id="tab-foul" aria-selected="false" aria-controls="panel-foul" tabindex="-1">Foul-out</button>
+    <button role="tab" id="tab-rare" aria-selected="false" aria-controls="panel-rare" tabindex="-1">Head Coach Ejection</button>
+  </nav>
+
+  <!-- ANY PLAYER -->
+  <section class="panel" id="panel-any" role="tabpanel" aria-labelledby="tab-any">
+    <div class="grid">
+      <div class="stack">
+        <div>
+          <span class="label">Stat</span>
+          <div class="seg" id="stat-seg">
+            <label><input type="radio" name="stat" value="points" checked> Points</label>
+            <label><input type="radio" name="stat" value="rebounds"> Rebounds</label>
+            <label><input type="radio" name="stat" value="assists"> Assists</label>
+          </div>
+        </div>
+        <div id="mode-wrap" hidden>
+          <span class="label">What you're pasting</span>
+          <div class="seg" id="mode-seg">
+            <label id="mode-base-label"><input type="radio" name="mode" value="base" checked> Base lines</label>
+            <label><input type="radio" name="mode" value="milestone"> Milestone prices</label>
+            <label><input type="radio" name="mode" value="ladder"> Alt-line ladders</label>
+          </div>
+        </div>
+        <p class="hint" id="mode-hint" style="margin:0"></p>
+        <div>
+          <label for="paste" class="label">Paste</label>
+          <textarea id="paste" spellcheck="false" autocomplete="off"></textarea>
+        </div>
+      </div>
+      <div class="stack">
+        <div>
+          <span class="label" id="thr-label">Thresholds</span>
+          <div class="chips" id="chips" role="group" aria-labelledby="thr-label"></div>
+          <div class="chips" style="margin-top:8px">
+            <label for="custom-thr" class="label">Other</label>
+            <input id="custom-thr" type="number" min="1" step="1" placeholder="e.g. 55" inputmode="numeric">
+            <button class="plain" id="add-thr" type="button">Add</button>
+          </div>
+        </div>
+        <div id="messages" class="stack" aria-live="polite"></div>
+        <div><button class="plain" id="clear" type="button">Clear paste</button></div>
+      </div>
+    </div>
+    <div id="results"></div>
+  </section>
+
+  <!-- TEAM TOTALS -->
+  <section class="panel" id="panel-team" role="tabpanel" aria-labelledby="tab-team" hidden>
+    <div class="grid">
+      <div class="stack">
+        <p class="hint" style="margin:0">Paste lines for the same window as the market, such as through 3 quarters. Each team needs 2 or more lines, and the game total too if you want the link between the teams worked out for you.</p>
+        <div><label for="t-home" class="label">Home team lines</label>
+          <textarea id="t-home" class="short" spellcheck="false" autocomplete="off" placeholder="O 99.5-110&#10;U 99.5-110&#10;O 104.5+150&#10;U 104.5-190"></textarea></div>
+        <div><label for="t-away" class="label">Away team lines</label>
+          <textarea id="t-away" class="short" spellcheck="false" autocomplete="off" placeholder="O 96.5-110&#10;U 96.5-110&#10;O 101.5+150&#10;U 101.5-190"></textarea></div>
+        <div><label for="t-total" class="label">Game total lines</label>
+          <textarea id="t-total" class="short" spellcheck="false" autocomplete="off" placeholder="O 190.5-110&#10;U 190.5-110&#10;O 197.5+150&#10;U 197.5-190"></textarea></div>
+      </div>
+      <div class="stack">
+        <div class="chips">
+          <div><label for="t-reach-home" class="label">Home reaches</label><br>
+            <input id="t-reach-home" type="number" min="1" step="1" value="100" inputmode="numeric"></div>
+          <div><label for="t-reach-away" class="label">Away reaches</label><br>
+            <input id="t-reach-away" type="number" min="1" step="1" value="100" inputmode="numeric"></div>
+        </div>
+        <div><label for="t-std" class="label">Assumed spread in points</label><br>
+          <input id="t-std" type="number" min="1" step="0.5" placeholder="optional" inputmode="decimal">
+          <p class="hint">Only needed when a team has a single line. One line fixes the average but not how wide the scoring ranges, so this is your assumption.</p></div>
+        <div><label for="t-rho" class="label">Correlation between the teams</label><br>
+          <input id="t-rho" type="number" min="-0.95" max="0.95" step="0.05" placeholder="optional" inputmode="decimal">
+          <p class="hint">Leave blank to work it out from the game total lines.</p></div>
+        <div id="tmessages" class="stack" aria-live="polite"></div>
+      </div>
+    </div>
+    <div id="tresults"></div>
+  </section>
+
+  <!-- DOUBLE / TRIPLE -->
+  <section class="panel" id="panel-direct" role="tabpanel" aria-labelledby="tab-direct" hidden>
+    <div class="grid">
+      <div class="stack">
+        <div>
+          <span class="label">Market</span>
+          <div class="seg">
+            <label><input type="radio" name="dmarket" value="double" checked> Double-double</label>
+            <label><input type="radio" name="dmarket" value="triple"> Triple-double</label>
+          </div>
+        </div>
+        <div>
+          <label for="dpaste" class="label">Paste each player's Yes price, and No if the book posts it</label>
+          <textarea id="dpaste" spellcheck="false" autocomplete="off" placeholder="Nikola Jokic, -250, +190&#10;Luka Doncic -120 -110&#10;Domantas Sabonis +150"></textarea>
+        </div>
+      </div>
+      <div class="stack">
+        <div>
+          <label for="dbook" class="label">Book's price for any player</label><br>
+          <input id="dbook" type="text" autocomplete="off" placeholder="optional">
+        </div>
+        <div id="dmessages" class="stack" aria-live="polite"></div>
+      </div>
+    </div>
+    <div id="dresults"></div>
+  </section>
+
+  <!-- FOUL-OUT -->
+  <section class="panel" id="panel-foul" role="tabpanel" aria-labelledby="tab-foul" hidden>
+    <div class="grid">
+      <div class="stack">
+        <div>
+          <span class="label">Pick the two teams (fills in the PF)</span>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+            <select id="fteam-a" aria-label="First team"></select>
+            <select id="fteam-b" aria-label="Second team"></select>
+          </div>
+          <div class="hint" id="fteam-info"></div>
+          <details>
+            <summary>Team data</summary>
+            <p class="hint">Run the refresh cell in your notebook, then paste what it prints here. It stays in this browser. To keep it for every visit, put it in <code>team_fouls.js</code>.</p>
+            <textarea id="fteam-data" class="short" rows="4" spellcheck="false" aria-label="Team foul data" placeholder='{"as_of": "2026-10-18", "teams": {"BOS": {"last10": 19.5, "season": 20.1, "games_this_season": 12}, ...}}'></textarea>
+            <div id="fteam-msgs" class="stack" aria-live="polite"></div>
+          </details>
+        </div>
+        <div><label for="pf" class="label">Projected team fouls (PF)</label><br>
+          <input id="pf" type="number" step="0.1" placeholder="e.g. 44" inputmode="decimal"></div>
+        <div><label for="fbook" class="label">Book's price</label><br>
+          <input id="fbook" type="text" autocomplete="off" placeholder="e.g. +400"></div>
+        <div><label for="fsafety" class="label">Safety margin (percentage points)</label><br>
+          <input id="fsafety" type="number" min="0" step="0.5" value="2" inputmode="decimal">
+          <p class="hint">How far above break-even the model must be before the status reads PASS.</p></div>
+      </div>
+      <div class="stack"><div id="fmessages" class="stack" aria-live="polite"></div></div>
+    </div>
+    <div id="fresults"></div>
+  </section>
+
+  <!-- HEAD COACH EJECTED -->
+  <section class="panel" id="panel-rare" role="tabpanel" aria-labelledby="tab-rare" hidden>
+    <div class="stack">
+      <div><label for="coach-price" class="label">Fixed price, every game</label><br>
+        <input id="coach-price" type="text" autocomplete="off" value="+10000">
+        <p class="hint">Shown as entered. Your margin is not added to it.</p></div>
+    </div>
+    <div id="rresults"></div>
+  </section>
+
+  <footer>
+    Everything runs in your browser. Nothing you paste is sent anywhere. Only the foul tab's team data box is remembered, in this browser. Odds are American.
+    Milestone and Yes prices carry the book's own margin, so the any-player number built from them runs a little high.
+  </footer>
+</div>
+<script src="engine.js"></script>
+<script src="team_fouls.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

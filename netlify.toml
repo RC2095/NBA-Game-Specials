@@ -1,0 +1,3 @@
+# Netlify: serve the static site/ folder. No build step, no functions.
+[build]
+  publish = "site"
