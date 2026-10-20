@@ -201,7 +201,7 @@ footer { margin-top: 40px; font-size: 14px; color: var(--ink-soft); border-top: 
     <button role="tab" id="tab-any" aria-selected="true" aria-controls="panel-any">Any player</button>
     <button role="tab" id="tab-team" aria-selected="false" aria-controls="panel-team" tabindex="-1">Team totals</button>
     <button role="tab" id="tab-direct" aria-selected="false" aria-controls="panel-direct" tabindex="-1">Double / triple double</button>
-    <button role="tab" id="tab-foul" aria-selected="false" aria-controls="panel-foul" tabindex="-1">Any Player to Foul-out</button>
+    <button role="tab" id="tab-foul" aria-selected="false" aria-controls="panel-foul" tabindex="-1">Foul-out</button>
     <button role="tab" id="tab-rare" aria-selected="false" aria-controls="panel-rare" tabindex="-1">Head Coach Ejection</button>
   </nav>
 
@@ -250,14 +250,6 @@ footer { margin-top: 40px; font-size: 14px; color: var(--ink-soft); border-top: 
 
   <!-- TEAM TOTALS -->
   <section class="panel" id="panel-team" role="tabpanel" aria-labelledby="tab-team" hidden>
-    <div style="margin-bottom:16px">
-      <span class="label">Price from</span>
-      <div class="seg" id="tmode-seg">
-        <label><input type="radio" name="tmode" value="quarters" checked> Quarter spreads and totals</label>
-        <label><input type="radio" name="tmode" value="lines"> Team lines</label>
-      </div>
-    </div>
-
     <div id="tmode-quarters">
       <div class="stack">
         <p class="hint" style="margin:0">Prices a team to reach a score through the first 3 quarters, such as 100+. Enter each quarter's total and spread with both sides' prices. The spread is the home team's, with its sign: home -1.5, or home +0.5. Add Q4 and each team's full-game total to correct the averages.</p>
@@ -272,36 +264,6 @@ footer { margin-top: 40px; font-size: 14px; color: var(--ink-soft); border-top: 
         <div id="qmessages" class="stack" aria-live="polite"></div>
       </div>
       <div id="qresults"></div>
-    </div>
-
-    <div id="tmode-lines" hidden>
-    <div class="grid">
-      <div class="stack">
-        <p class="hint" style="margin:0">Paste lines for the same window as the market, such as through 3 quarters. Each team needs 2 or more lines, and the game total too if you want the link between the teams worked out for you.</p>
-        <div><label for="t-home" class="label">Home team lines</label>
-          <textarea id="t-home" class="short" spellcheck="false" autocomplete="off" placeholder="O 99.5-110&#10;U 99.5-110&#10;O 104.5+150&#10;U 104.5-190"></textarea></div>
-        <div><label for="t-away" class="label">Away team lines</label>
-          <textarea id="t-away" class="short" spellcheck="false" autocomplete="off" placeholder="O 96.5-110&#10;U 96.5-110&#10;O 101.5+150&#10;U 101.5-190"></textarea></div>
-        <div><label for="t-total" class="label">Game total lines</label>
-          <textarea id="t-total" class="short" spellcheck="false" autocomplete="off" placeholder="O 190.5-110&#10;U 190.5-110&#10;O 197.5+150&#10;U 197.5-190"></textarea></div>
-      </div>
-      <div class="stack">
-        <div class="chips">
-          <div><label for="t-reach-home" class="label">Home reaches</label><br>
-            <input id="t-reach-home" type="number" min="1" step="1" value="100" inputmode="numeric"></div>
-          <div><label for="t-reach-away" class="label">Away reaches</label><br>
-            <input id="t-reach-away" type="number" min="1" step="1" value="100" inputmode="numeric"></div>
-        </div>
-        <div><label for="t-std" class="label">Assumed spread in points</label><br>
-          <input id="t-std" type="number" min="1" step="0.5" placeholder="optional" inputmode="decimal">
-          <p class="hint">Only needed when a team has a single line. One line fixes the average but not how wide the scoring ranges, so this is your assumption.</p></div>
-        <div><label for="t-rho" class="label">Correlation between the teams</label><br>
-          <input id="t-rho" type="number" min="-0.95" max="0.95" step="0.05" placeholder="optional" inputmode="decimal">
-          <p class="hint">Leave blank to work it out from the game total lines.</p></div>
-        <div id="tmessages" class="stack" aria-live="polite"></div>
-      </div>
-    </div>
-    <div id="tresults"></div>
     </div>
   </section>
 

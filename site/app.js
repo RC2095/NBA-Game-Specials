@@ -400,112 +400,6 @@
   $("custom-thr").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("add-thr").click(); } });
 
   // ============================================================
-  // TEAM TOTALS
-  // ============================================================
-  function numOrNull(id) {
-    const raw = $(id).value.trim();
-    return raw === "" ? null : Number(raw);
-  }
-
-  function recomputeTeam() {
-    const margin = readMargin();
-    const msgs = $("tmessages"), res = $("tresults");
-    clear(msgs); clear(res);
-    if (margin.error) msgs.appendChild(callout("warn", margin.error));
-
-    const boxes = [
-      { id: "t-home", label: "Home team" },
-      { id: "t-away", label: "Away team" },
-      { id: "t-total", label: "Game total" },
-    ].map((b) => {
-      const parsed = E.parseLadderPaste($(b.id).value);
-      return { label: b.label, lines: parsed.lines, errors: parsed.errors, empty: $(b.id).value.trim() === "" };
-    });
-    const [home, away, total] = boxes;
-
-    const problems = [];
-    boxes.forEach((b) => b.errors.forEach((e) => problems.push(b.label + ": " + e)));
-    if (problems.length) {
-      msgs.appendChild(callout("err", "Some lines couldn't be read and are left out:", problems.slice(0, 8)));
-    }
-
-    if (home.empty && away.empty) {
-      res.appendChild(h("p", { class: "empty", text: "Paste a team's lines and its chance of reaching the threshold appears here." }));
-      return;
-    }
-
-    const reachHome = Number($("t-reach-home").value), reachAway = Number($("t-reach-away").value);
-    const std = numOrNull("t-std"), rho = numOrNull("t-rho");
-    const inputProblems = [];
-    if (!Number.isFinite(reachHome) || reachHome < 1) inputProblems.push("Home threshold must be 1 or more.");
-    if (!Number.isFinite(reachAway) || reachAway < 1) inputProblems.push("Away threshold must be 1 or more.");
-    if (std !== null && (!Number.isFinite(std) || std <= 0)) inputProblems.push("The assumed spread must be above zero.");
-    if (rho !== null && (!Number.isFinite(rho) || rho <= -1 || rho >= 1)) inputProblems.push("Correlation must be between -1 and 1.");
-    if (inputProblems.length) {
-      msgs.appendChild(callout("err", "Fix this to see prices:", inputProblems));
-      return;
-    }
-
-    const rows = [];
-    const warnings = [];
-    const stdArg = std;
-    let single = {};
-    [["home", home, reachHome, "Home"], ["away", away, reachAway, "Away"]].forEach((t) => {
-      const key = t[0], box = t[1], reach = t[2], name = t[3];
-      if (box.empty) return;
-      const label = name + " " + reach + "+";
-      try {
-        single[key] = E.priceSingleTeam(box.lines, reach, stdArg, name + " team");
-        rows.push({ label: label, p: single[key].probability, flags: [], key: "team:" + key + ":" + reach });
-      } catch (e) {
-        rows.push({ label: label, p: null, reason: e.message, key: "team:" + key });
-        warnings.push(e.message);
-      }
-    });
-
-    let both = null;
-    if (!home.empty && !away.empty) {
-      const label = "Both: Home " + reachHome + "+ and Away " + reachAway + "+";
-      try {
-        both = E.priceBothTeams(home.lines, away.lines, total.lines, reachHome, reachAway, stdArg, rho);
-        rows.push({ label: label, p: both.joint_probability, flags: [], key: "team:both:" + reachHome + ":" + reachAway });
-        both.warnings.forEach((w) => warnings.push(w));
-      } catch (e) {
-        rows.push({ label: label, p: null, reason: e.message, key: "team:both" });
-        warnings.push(e.message);
-      }
-    }
-    if (warnings.length) msgs.appendChild(callout("warn", "Check this:", warnings.filter((w, i, a) => a.indexOf(w) === i)));
-
-    res.appendChild(boardTable(rows, margin));
-
-    const detail = h("dl");
-    const add = (k, v) => { detail.appendChild(h("dt", { text: k })); detail.appendChild(h("dd", { text: v })); };
-    ["home", "away"].forEach((k) => {
-      if (!single[k]) return;
-      add((k === "home" ? "Home" : "Away") + " team average and spread", single[k].mean.toFixed(1) + " and " + single[k].std.toFixed(1) + " points (" + single[k].basis + ")");
-    });
-    if (both) {
-      add("Link between the teams", both.rho.toFixed(2) + " (" + both.rho_source + ")");
-      add("If the teams scored independently", fmtPct(both.independent_probability));
-      add("Both, with the link", fmtPct(both.joint_probability));
-    }
-    if (detail.children.length) {
-      res.appendChild(h("details", { open: "" }, h("summary", { text: "How these were worked out" }), h("div", { class: "card", style: "margin-top:8px" }, detail)));
-    }
-
-    const notes = h("ul", { class: "notes" });
-    [
-      "Team scoring is treated as a bell curve, a standard approximation that has not been checked against real prices here.",
-      "\"100+\" means 100 or more, so the chance is measured from 99.5, the same way the player markets work.",
-      "Fast games lift both teams together, so the chance of both is higher than the two chances multiplied. The detail above shows by how much.",
-      "Use lines for exactly the window you are pricing. Lines for the full game do not describe the first three quarters."
-    ].forEach((n) => notes.appendChild(h("li", { text: n })));
-    res.appendChild(notes);
-  }
-  ["t-home", "t-away", "t-total", "t-reach-home", "t-reach-away", "t-std", "t-rho"].forEach((id) => $(id).addEventListener("input", recomputeTeam));
-
-  // ============================================================
   // TEAM SCORE THROUGH 3 QUARTERS, FROM QUARTER SPREADS AND TOTALS
   // ============================================================
   const QROWS = [
@@ -672,13 +566,6 @@
   }
   ["q-home-name", "q-away-name", "q-reach-home", "q-reach-away"].forEach((id) => $(id).addEventListener("input", recomputeQuarters));
   buildQuarterGrid();
-
-  document.querySelectorAll('input[name="tmode"]').forEach((el) => el.addEventListener("change", () => {
-    const mode = document.querySelector('input[name="tmode"]:checked').value;
-    $("tmode-quarters").hidden = mode !== "quarters";
-    $("tmode-lines").hidden = mode !== "lines";
-    if (mode === "quarters") recomputeQuarters(); else recomputeTeam();
-  }));
 
   // ============================================================
   // DOUBLE / TRIPLE DOUBLE
@@ -875,7 +762,7 @@
   // ============================================================
   // margin changes redraw everything
   // ============================================================
-  function recomputeAll() { recomputeAny(); recomputeQuarters(); recomputeTeam(); recomputeDirect(); recomputeFoul(); recomputeRare(); }
+  function recomputeAll() { recomputeAny(); recomputeQuarters(); recomputeDirect(); recomputeFoul(); recomputeRare(); }
   $("margin").addEventListener("input", recomputeAll);
   $("margin-mode").addEventListener("change", recomputeAll);
 
