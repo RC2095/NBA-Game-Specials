@@ -581,35 +581,49 @@
     if (margin.error) msgs.appendChild(callout("warn", margin.error));
 
     const pfRaw = $("pf").value.trim(), oddsRaw = $("fbook").value.trim(), safetyRaw = $("fsafety").value.trim();
-    if (pfRaw === "" || oddsRaw === "") {
-      res.appendChild(h("p", { class: "empty", text: "Enter the projected fouls and the book's price." }));
+    if (pfRaw === "") {
+      res.appendChild(h("p", { class: "empty", text: "Pick the two teams, or enter the projected fouls." }));
       return;
     }
-    const pf = Number(pfRaw), odds = Number(oddsRaw), safety = safetyRaw === "" ? 2 : Number(safetyRaw);
+    const pf = Number(pfRaw);
+    const hasBook = oddsRaw !== "";
+    const odds = Number(oddsRaw), safety = safetyRaw === "" ? 2 : Number(safetyRaw);
     const problems = [];
     if (!Number.isFinite(pf) || pf <= 0) problems.push("Projected fouls must be a positive number.");
-    if (!Number.isInteger(odds) || Math.abs(odds) < 100) problems.push("The book's price must be +100 or higher, or -100 or lower.");
-    if (!Number.isFinite(safety) || safety < 0) problems.push("The safety margin must be zero or more.");
+    if (hasBook && (!Number.isInteger(odds) || Math.abs(odds) < 100)) problems.push("The book's price must be +100 or higher, or -100 or lower.");
+    if (hasBook && (!Number.isFinite(safety) || safety < 0)) problems.push("The safety margin must be zero or more.");
     if (problems.length) { msgs.appendChild(callout("err", "Fix this to see a price:", problems)); return; }
 
-    const r = E.calculatePrice(pf, odds, safety);
-    const q = quoteFor(r.calibrated_probability, margin);
+    // Fair odds and odds with margin only need the PF. The book's price adds edge, ROI and status.
+    let probability, fairOdds, extrapolated, r = null;
+    if (hasBook) {
+      r = E.calculatePrice(pf, odds, safety);
+      probability = r.calibrated_probability; fairOdds = r.fair_american_odds; extrapolated = r.extrapolated;
+    } else {
+      const ip = E.interpolateProbability(pf);
+      probability = ip[0]; extrapolated = ip[1];
+      fairOdds = E.probabilityToFairAmerican(probability);
+    }
+    const q = quoteFor(probability, margin);
     const card = h("div", { class: "card", style: "margin-top:20px" });
     card.appendChild(h("div", { class: "pair" },
-      h("div", { class: "big fair" }, h("div", { class: "k", text: "Fair odds" }), h("div", { class: "v", text: fmtOdds(r.fair_american_odds) })),
+      h("div", { class: "big fair" }, h("div", { class: "k", text: "Fair odds" }), h("div", { class: "v", text: fmtOdds(fairOdds) })),
       h("div", { class: "big quote" }, h("div", { class: "k", text: "Odds with margin" }), h("div", { class: "v", text: fmtOdds(q.odds) }))));
     const dl = h("dl");
     const add = (k, v, cls) => { dl.appendChild(h("dt", { text: k })); dl.appendChild(h("dd", { class: cls || "", text: v })); };
-    add("Probability", r.calibrated_probability_percent.toFixed(2) + "%");
-    add("Book's break-even", r.market_break_even_probability_percent.toFixed(2) + "%");
-    add("Edge", fmtSigned(r.probability_edge_pp, 2, " pp"), r.probability_edge_pp > 0 ? "pos" : "neg");
-    add("Expected ROI", fmtSigned(r.expected_roi_percent, 1, "%"), r.expected_roi_percent > 0 ? "pos" : "neg");
-    add("Lowest price worth taking", fmtOdds(r.minimum_acceptable_american_odds));
-    const stat = h("span", { class: "status " + r.status, text: r.status.replace(/_/g, " ").toLowerCase() });
-    dl.appendChild(h("dt", { text: "Status" })); dl.appendChild(h("dd", null, stat));
+    add("Probability", (probability * 100).toFixed(2) + "%");
+    if (r) {
+      add("Book's break-even", r.market_break_even_probability_percent.toFixed(2) + "%");
+      add("Edge", fmtSigned(r.probability_edge_pp, 2, " pp"), r.probability_edge_pp > 0 ? "pos" : "neg");
+      add("Expected ROI", fmtSigned(r.expected_roi_percent, 1, "%"), r.expected_roi_percent > 0 ? "pos" : "neg");
+      add("Lowest price worth taking", fmtOdds(r.minimum_acceptable_american_odds));
+      const stat = h("span", { class: "status " + r.status, text: r.status.replace(/_/g, " ").toLowerCase() });
+      dl.appendChild(h("dt", { text: "Status" })); dl.appendChild(h("dd", null, stat));
+    }
     card.appendChild(dl);
+    if (!r) card.appendChild(h("p", { class: "hint", style: "margin:12px 0 0", text: "Add the book's price to see the edge, expected ROI and status." }));
     res.appendChild(card);
-    if (r.extrapolated) {
+    if (extrapolated) {
       msgs.appendChild(callout("warn", "Outside the 30 to 50 fouls the model was calibrated on, so this probability is extended past its data."));
     }
   }
