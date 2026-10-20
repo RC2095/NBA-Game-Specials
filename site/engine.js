@@ -706,6 +706,86 @@
   }
 
   // ============================================================
+  // THREE-QUARTER TEAM SCORE FROM QUARTER SPREADS AND TOTALS
+  // (port of the same section in team_markets.py)
+  // ============================================================
+  const THREE_QUARTER_SWING = 10.15;
+  const THREE_QUARTER_SWING_RANGE = [9.9, 10.4];
+  const QUARTER_TOTAL_SD = 9.0;
+  const QUARTER_MARGIN_SD = 9.0;
+  const FULL_GAME_TEAM_SD = 12.9;
+
+  function checkOdds(odds, label) {
+    if (!Number.isFinite(odds) || Math.abs(odds) < 100) {
+      throw new Error(label + ": " + odds + " is not a real American price (use +100 or more, or -100 or less).");
+    }
+  }
+
+  // [homeMean, awayMean] for one quarter. homeLine is the home team's signed spread.
+  function quarterTeamMeans(totalLine, overOdds, underOdds, homeLine, homeOdds, awayOdds) {
+    if (!(Number.isFinite(totalLine) && totalLine > 0)) throw new Error("Total line must be a positive number (got " + totalLine + ").");
+    if (!Number.isFinite(homeLine)) throw new Error("Spread must be a number (got " + homeLine + ").");
+    checkOdds(overOdds, "Over"); checkOdds(underOdds, "Under");
+    checkOdds(homeOdds, "Home spread"); checkOdds(awayOdds, "Away spread");
+    const pOver = devigTwoWay(overOdds, underOdds)[0];
+    const total = totalLine + QUARTER_TOTAL_SD * normPpf(pOver);
+    const pHome = devigTwoWay(homeOdds, awayOdds)[0];
+    const margin = -homeLine + QUARTER_MARGIN_SD * normPpf(pHome);
+    return [(total + margin) / 2.0, (total - margin) / 2.0];
+  }
+
+  function fullGameTeamMedian(line, overOdds, underOdds) {
+    if (!(Number.isFinite(line) && line > 0)) throw new Error("Team total line must be a positive number (got " + line + ").");
+    checkOdds(overOdds, "Team total over"); checkOdds(underOdds, "Team total under");
+    return line + FULL_GAME_TEAM_SD * normPpf(devigTwoWay(overOdds, underOdds)[0]);
+  }
+
+  const QUARTER_KEYS = ["total_line", "over_odds", "under_odds", "home_line", "home_odds", "away_odds"];
+
+  function threeQuarterTeamMeans(quarters, quarter4, homeTeamTotal, awayTeamTotal) {
+    if (!Array.isArray(quarters) || quarters.length !== 3) throw new Error("Need exactly three quarters (Q1, Q2, Q3).");
+    const one = (q, name) => {
+      const missing = QUARTER_KEYS.filter((k) => q[k] === undefined || q[k] === null);
+      if (missing.length) throw new Error(name + " is missing: " + missing.join(", ") + ".");
+      return quarterTeamMeans(q.total_line, q.over_odds, q.under_odds, q.home_line, q.home_odds, q.away_odds);
+    };
+    const means = quarters.map((q, i) => one(q, "Q" + (i + 1)));
+    let home3 = means[0][0] + means[1][0] + means[2][0];
+    let away3 = means[0][1] + means[1][1] + means[2][1];
+    const scaled = { home: false, away: false };
+    const q4 = quarter4 ? one(quarter4, "Q4") : null;
+    [["home", homeTeamTotal, 0], ["away", awayTeamTotal, 1]].forEach((t) => {
+      const side = t[0], info = t[1], idx = t[2];
+      if (!q4 || !info) return;
+      const three = side === "home" ? home3 : away3;
+      const median = fullGameTeamMedian(info.line, info.over_odds, info.under_odds);
+      const factor = median / (three + q4[idx]);
+      if (side === "home") home3 = three * factor; else away3 = three * factor;
+      scaled[side] = true;
+    });
+    const notes = [];
+    if (!scaled.home || !scaled.away) {
+      notes.push(
+        "Add Q4 and each team's full-game total to correct the averages. Without them the averages " +
+          "tend to run about 0.5 points low, which makes the 100+ chance roughly 5% too low."
+      );
+    }
+    return { home_mean: home3, away_mean: away3, scaled: scaled, notes: notes };
+  }
+
+  function priceThreeQuarterTeams(quarters, reachHome, reachAway, quarter4, homeTeamTotal, awayTeamTotal, swing) {
+    reachHome = reachHome === undefined ? 100 : reachHome;
+    reachAway = reachAway === undefined ? 100 : reachAway;
+    swing = swing === undefined ? THREE_QUARTER_SWING : swing;
+    const m = threeQuarterTeamMeans(quarters, quarter4, homeTeamTotal, awayTeamTotal);
+    return {
+      home_mean: m.home_mean, away_mean: m.away_mean, scaled: m.scaled, notes: m.notes, swing: swing,
+      probability_home: teamReachProbability(m.home_mean, swing, reachHome),
+      probability_away: teamReachProbability(m.away_mean, swing, reachAway),
+    };
+  }
+
+  // ============================================================
   // PASTE PARSERS
   // ============================================================
 
@@ -1276,6 +1356,9 @@
     reachToCutoff: reachToCutoff, teamReachProbability: teamReachProbability,
     meanFromSingleLine: meanFromSingleLine, priceBothTeamsReach: priceBothTeamsReach,
     resolveTeam: resolveTeam, priceSingleTeam: priceSingleTeam, priceBothTeams: priceBothTeams,
+    THREE_QUARTER_SWING: THREE_QUARTER_SWING, THREE_QUARTER_SWING_RANGE: THREE_QUARTER_SWING_RANGE,
+    quarterTeamMeans: quarterTeamMeans, fullGameTeamMedian: fullGameTeamMedian,
+    threeQuarterTeamMeans: threeQuarterTeamMeans, priceThreeQuarterTeams: priceThreeQuarterTeams,
     // parsing + roster pricing
     parseOverUnderPaste: parseOverUnderPaste,
     parseMilestonePaste: parseMilestonePaste,

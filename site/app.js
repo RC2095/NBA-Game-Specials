@@ -506,6 +506,181 @@
   ["t-home", "t-away", "t-total", "t-reach-home", "t-reach-away", "t-std", "t-rho"].forEach((id) => $(id).addEventListener("input", recomputeTeam));
 
   // ============================================================
+  // TEAM SCORE THROUGH 3 QUARTERS, FROM QUARTER SPREADS AND TOTALS
+  // ============================================================
+  const QROWS = [
+    { key: "q1", label: "Q1", optional: false },
+    { key: "q2", label: "Q2", optional: false },
+    { key: "q3", label: "Q3", optional: false },
+    { key: "q4", label: "Q4 (optional)", optional: true },
+  ];
+  const QFIELDS = [
+    { id: "total", label: "Total", prop: "total_line", kind: "line", ph: "56.5" },
+    { id: "over", label: "Over price", prop: "over_odds", kind: "odds", ph: "-110" },
+    { id: "under", label: "Under price", prop: "under_odds", kind: "odds", ph: "-110" },
+    { id: "line", label: "Home spread", prop: "home_line", kind: "line", ph: "-1.5" },
+    { id: "home", label: "Home price", prop: "home_odds", kind: "odds", ph: "-110" },
+    { id: "away", label: "Away price", prop: "away_odds", kind: "odds", ph: "-110" },
+  ];
+  const TTFIELDS = [
+    { id: "line", label: "Full-game line", prop: "line", kind: "line", ph: "111.5" },
+    { id: "over", label: "Over price", prop: "over_odds", kind: "odds", ph: "-110" },
+    { id: "under", label: "Under price", prop: "under_odds", kind: "odds", ph: "-110" },
+  ];
+
+  function buildQuarterGrid() {
+    const grid = $("qgrid"), tt = $("qtotals");
+    clear(grid); clear(tt);
+    grid.appendChild(h("thead", null, h("tr", null, h("th", { text: "Quarter" }),
+      ...QFIELDS.map((f) => h("th", { text: f.label })))));
+    const body = h("tbody");
+    QROWS.forEach((r) => {
+      const tr = h("tr", null, h("td", { class: "thr", text: r.label }));
+      QFIELDS.forEach((f) => {
+        const input = h("input", { type: "text", id: "qin-" + r.key + "-" + f.id, autocomplete: "off", spellcheck: "false",
+          placeholder: f.ph, inputmode: "text", "aria-label": r.label + " " + f.label.toLowerCase() });
+        tr.appendChild(h("td", null, input));
+      });
+      body.appendChild(tr);
+    });
+    grid.appendChild(body);
+    tt.appendChild(h("thead", null, h("tr", null, h("th", { text: "Team total, full game (optional)" }),
+      ...TTFIELDS.map((f) => h("th", { text: f.label })))));
+    const tb = h("tbody");
+    [["home", "Home"], ["away", "Away"]].forEach((t) => {
+      const tr = h("tr", null, h("td", { class: "thr", text: t[1] }));
+      TTFIELDS.forEach((f) => {
+        tr.appendChild(h("td", null, h("input", { type: "text", id: "qtt-" + t[0] + "-" + f.id, autocomplete: "off",
+          spellcheck: "false", placeholder: f.ph, "aria-label": t[1] + " team total " + f.label.toLowerCase() })));
+      });
+      tb.appendChild(tr);
+    });
+    tt.appendChild(tb);
+    grid.querySelectorAll("input").forEach((el) => el.addEventListener("input", recomputeQuarters));
+    tt.querySelectorAll("input").forEach((el) => el.addEventListener("input", recomputeQuarters));
+  }
+
+  // One typed cell -> {empty} | {bad: reason} | {v}
+  function readCell(id, kind) {
+    const raw = $(id).value.trim().replace(/[\u2212\u2013\u2014]/g, "-");
+    if (raw === "") return { empty: true };
+    if (kind === "odds") {
+      if (!/^[+-]\s*\d+$/.test(raw)) return { bad: "needs a + or - in front, like -110 or +150" };
+      const v = parseInt(raw.replace(/\s+/g, ""), 10);
+      if (Math.abs(v) < 100) return { bad: v + " isn't a real American price" };
+      return { v: v };
+    }
+    if (!/^[+-]?\d+(\.\d+)?$/.test(raw)) return { bad: "isn't a number" };
+    return { v: Number(raw) };
+  }
+
+  // Reads a row of fields. Returns {state: "empty"|"partial"|"ok"|"bad", data, problems}
+  function readRow(prefix, fields, label) {
+    const data = {}, problems = [], missing = [];
+    let filled = 0;
+    fields.forEach((f) => {
+      const c = readCell(prefix + f.id, f.kind);
+      if (c.empty) { missing.push(f.label.toLowerCase()); return; }
+      filled++;
+      if (c.bad) problems.push(label + " " + f.label.toLowerCase() + ": " + c.bad + ".");
+      else data[f.prop] = c.v;
+    });
+    if (filled === 0) return { state: "empty", data: null, problems: [], missing: missing };
+    if (problems.length) return { state: "bad", data: null, problems: problems, missing: missing };
+    if (missing.length) return { state: "partial", data: null, problems: [], missing: missing };
+    return { state: "ok", data: data, problems: [], missing: [] };
+  }
+
+  function recomputeQuarters() {
+    const margin = readMargin();
+    const msgs = $("qmessages"), res = $("qresults");
+    clear(msgs); clear(res);
+    if (margin.error) msgs.appendChild(callout("warn", margin.error));
+
+    const rows = QROWS.map((r) => ({ r: r, row: readRow("qin-" + r.key + "-", QFIELDS, r.label.split(" ")[0]) }));
+    const tts = ["home", "away"].map((t) => ({ t: t, row: readRow("qtt-" + t + "-", TTFIELDS, (t === "home" ? "Home" : "Away") + " team total") }));
+    const anything = rows.some((x) => x.row.state !== "empty") || tts.some((x) => x.row.state !== "empty");
+    if (!anything) {
+      res.appendChild(h("p", { class: "empty", text: "Enter Q1, Q2 and Q3 and each team's chance of reaching the score appears here." }));
+      return;
+    }
+
+    const problems = [];
+    rows.forEach((x) => { problems.push(...x.row.problems); });
+    tts.forEach((x) => { problems.push(...x.row.problems); });
+    rows.filter((x) => !x.r.optional).forEach((x) => {
+      if (x.row.state === "empty") problems.push(x.r.label + ": enter its total and spread with both prices.");
+      else if (x.row.state === "partial") problems.push(x.r.label + " still needs: " + x.row.missing.join(", ") + ".");
+    });
+    const reachHome = Number($("q-reach-home").value), reachAway = Number($("q-reach-away").value);
+    if (!Number.isFinite(reachHome) || reachHome < 1) problems.push("Home threshold must be 1 or more.");
+    if (!Number.isFinite(reachAway) || reachAway < 1) problems.push("Away threshold must be 1 or more.");
+    if (problems.length) {
+      msgs.appendChild(callout("err", "Fix this to see prices:", problems.slice(0, 10)));
+      return;
+    }
+
+    const warn = [];
+    const q4row = rows[3].row;
+    let q4 = null;
+    if (q4row.state === "ok") q4 = q4row.data;
+    else if (q4row.state === "partial") warn.push("Q4 is incomplete (still needs: " + q4row.missing.join(", ") + "), so it is left out.");
+    const tt = {};
+    tts.forEach((x) => {
+      if (x.row.state === "ok") tt[x.t] = x.row.data;
+      else if (x.row.state === "partial") warn.push((x.t === "home" ? "Home" : "Away") + " team total is incomplete (still needs: " + x.row.missing.join(", ") + "), so it is left out.");
+    });
+
+    let r;
+    try {
+      r = E.priceThreeQuarterTeams([rows[0].row.data, rows[1].row.data, rows[2].row.data],
+        reachHome, reachAway, q4, tt.home || null, tt.away || null);
+    } catch (e) {
+      msgs.appendChild(callout("err", "Couldn't price this:", [e.message]));
+      return;
+    }
+    r.notes.forEach((n) => warn.push(n));
+    if (warn.length) msgs.appendChild(callout("warn", "Check this:", warn));
+
+    const homeName = $("q-home-name").value.trim().slice(0, 24) || "Home";
+    const awayName = $("q-away-name").value.trim().slice(0, 24) || "Away";
+    res.appendChild(boardTable([
+      { label: homeName + " " + reachHome + "+ through 3 quarters", p: r.probability_home, flags: [], key: "q3:home:" + reachHome },
+      { label: awayName + " " + reachAway + "+ through 3 quarters", p: r.probability_away, flags: [], key: "q3:away:" + reachAway },
+    ], margin));
+
+    const lo = E.THREE_QUARTER_SWING_RANGE[0], hi = E.THREE_QUARTER_SWING_RANGE[1];
+    const spreadOdds = (mean, reach, sw) => fmtOdds(E.probabilityToFairAmerican(E.teamReachProbability(mean, sw, reach)));
+    const detail = h("dl");
+    const add = (k, v) => { detail.appendChild(h("dt", { text: k })); detail.appendChild(h("dd", { text: v })); };
+    add(homeName + " expected score through 3 quarters", r.home_mean.toFixed(1) + (r.scaled.home ? " (corrected to the team total)" : " (from the quarter lines only)"));
+    add(awayName + " expected score through 3 quarters", r.away_mean.toFixed(1) + (r.scaled.away ? " (corrected to the team total)" : " (from the quarter lines only)"));
+    add("Swing in a team's score", r.swing.toFixed(2) + " points (plausible range " + lo + " to " + hi + ")");
+    add(homeName + " fair odds across that range", spreadOdds(r.home_mean, reachHome, hi) + " to " + spreadOdds(r.home_mean, reachHome, lo));
+    add(awayName + " fair odds across that range", spreadOdds(r.away_mean, reachAway, hi) + " to " + spreadOdds(r.away_mean, reachAway, lo));
+    res.appendChild(h("details", { open: "" }, h("summary", { text: "How these were worked out" }), h("div", { class: "card", style: "margin-top:8px" }, detail)));
+
+    const notes = h("ul", { class: "notes" });
+    [
+      "Each team's average comes from the quarter totals and spreads. How widely a team's score varies is fixed at " + r.swing.toFixed(2) + " points, measured from the book's own prices on three games.",
+      "The range above shows how much the fair odds move if the true swing is at either end of what was measured. It is the honest size of the uncertainty.",
+      "\"100+\" means 100 or more, so the chance is measured from 99.5, the same way the player markets work.",
+      "Only the first three quarters are priced. The swing was measured for that window and is not used for other windows.",
+      "Checked against six teams from one book. Those are the same prices the swing was measured on, so this is a consistency check, not an independent test."
+    ].forEach((n) => notes.appendChild(h("li", { text: n })));
+    res.appendChild(notes);
+  }
+  ["q-home-name", "q-away-name", "q-reach-home", "q-reach-away"].forEach((id) => $(id).addEventListener("input", recomputeQuarters));
+  buildQuarterGrid();
+
+  document.querySelectorAll('input[name="tmode"]').forEach((el) => el.addEventListener("change", () => {
+    const mode = document.querySelector('input[name="tmode"]:checked').value;
+    $("tmode-quarters").hidden = mode !== "quarters";
+    $("tmode-lines").hidden = mode !== "lines";
+    if (mode === "quarters") recomputeQuarters(); else recomputeTeam();
+  }));
+
+  // ============================================================
   // DOUBLE / TRIPLE DOUBLE
   // ============================================================
   function recomputeDirect() {
@@ -700,7 +875,7 @@
   // ============================================================
   // margin changes redraw everything
   // ============================================================
-  function recomputeAll() { recomputeAny(); recomputeTeam(); recomputeDirect(); recomputeFoul(); recomputeRare(); }
+  function recomputeAll() { recomputeAny(); recomputeQuarters(); recomputeTeam(); recomputeDirect(); recomputeFoul(); recomputeRare(); }
   $("margin").addEventListener("input", recomputeAll);
   $("margin-mode").addEventListener("change", recomputeAll);
 

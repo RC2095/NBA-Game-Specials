@@ -198,10 +198,10 @@ footer { margin-top: 40px; font-size: 14px; color: var(--ink-soft); border-top: 
   </header>
 
   <nav role="tablist" aria-label="Markets">
-    <button role="tab" id="tab-any" aria-selected="true" aria-controls="panel-any">Any Player PRA</button>
-    <button role="tab" id="tab-team" aria-selected="false" aria-controls="panel-team" tabindex="-1">100+ Points First 3Q</button>
-    <button role="tab" id="tab-direct" aria-selected="false" aria-controls="panel-direct" tabindex="-1">Any Player Double-Double / Triple-Double</button>
-    <button role="tab" id="tab-foul" aria-selected="false" aria-controls="panel-foul" tabindex="-1">Player to Foul Out</button>
+    <button role="tab" id="tab-any" aria-selected="true" aria-controls="panel-any">Any player</button>
+    <button role="tab" id="tab-team" aria-selected="false" aria-controls="panel-team" tabindex="-1">Team totals</button>
+    <button role="tab" id="tab-direct" aria-selected="false" aria-controls="panel-direct" tabindex="-1">Double / triple double</button>
+    <button role="tab" id="tab-foul" aria-selected="false" aria-controls="panel-foul" tabindex="-1">Foul-out</button>
     <button role="tab" id="tab-rare" aria-selected="false" aria-controls="panel-rare" tabindex="-1">Head Coach Ejection</button>
   </nav>
 
@@ -250,6 +250,31 @@ footer { margin-top: 40px; font-size: 14px; color: var(--ink-soft); border-top: 
 
   <!-- TEAM TOTALS -->
   <section class="panel" id="panel-team" role="tabpanel" aria-labelledby="tab-team" hidden>
+    <div style="margin-bottom:16px">
+      <span class="label">Price from</span>
+      <div class="seg" id="tmode-seg">
+        <label><input type="radio" name="tmode" value="quarters" checked> Quarter spreads and totals</label>
+        <label><input type="radio" name="tmode" value="lines"> Team lines</label>
+      </div>
+    </div>
+
+    <div id="tmode-quarters">
+      <div class="stack">
+        <p class="hint" style="margin:0">Prices a team to reach a score through the first 3 quarters, such as 100+. Enter each quarter's total and spread with both sides' prices. The spread is the home team's, with its sign: home -1.5, or home +0.5. Add Q4 and each team's full-game total to correct the averages.</p>
+        <div class="chips">
+          <div><label for="q-home-name" class="label">Home team</label><br><input id="q-home-name" type="text" autocomplete="off" placeholder="Home"></div>
+          <div><label for="q-away-name" class="label">Away team</label><br><input id="q-away-name" type="text" autocomplete="off" placeholder="Away"></div>
+          <div><label for="q-reach-home" class="label">Home reaches</label><br><input id="q-reach-home" type="number" min="1" step="1" value="100" inputmode="numeric"></div>
+          <div><label for="q-reach-away" class="label">Away reaches</label><br><input id="q-reach-away" type="number" min="1" step="1" value="100" inputmode="numeric"></div>
+        </div>
+        <div class="board" style="margin-top:0"><table id="qgrid"></table></div>
+        <div class="board" style="margin-top:0"><table id="qtotals"></table></div>
+        <div id="qmessages" class="stack" aria-live="polite"></div>
+      </div>
+      <div id="qresults"></div>
+    </div>
+
+    <div id="tmode-lines" hidden>
     <div class="grid">
       <div class="stack">
         <p class="hint" style="margin:0">Paste lines for the same window as the market, such as through 3 quarters. Each team needs 2 or more lines, and the game total too if you want the link between the teams worked out for you.</p>
@@ -277,6 +302,7 @@ footer { margin-top: 40px; font-size: 14px; color: var(--ink-soft); border-top: 
       </div>
     </div>
     <div id="tresults"></div>
+    </div>
   </section>
 
   <!-- DOUBLE / TRIPLE -->
