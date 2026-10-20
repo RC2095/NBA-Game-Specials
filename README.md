@@ -1,7 +1,5 @@
 # NBA 6-Foul Pricing API
 
-[![CI](https://github.com/your-org/nba-foul-api/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/nba-foul-api/actions/workflows/ci.yml)
-<!-- Replace "your-org/nba-foul-api" above with your actual GitHub path once pushed. -->
 
 A FastAPI service that prices the market for the event **"at least one player
 reaches 6 personal fouls in an NBA game."** It converts a projected total
