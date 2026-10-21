@@ -630,7 +630,9 @@
     notes.appendChild(h("li", { text: "Each player is priced from their own line, never rebuilt from points, rebounds and assists, because those move together. Teammates are treated as independent." }));
     res.appendChild(notes);
   }
-  document.querySelectorAll('input[name="dmarket"]').forEach((r) => r.addEventListener("change", recomputeDirect));
+  document.querySelectorAll('input[name="dmarket"]').forEach((r) => r.addEventListener("change", () => {
+    $("dpaste").value = ""; $("dbook").value = ""; recomputeDirect(); $("dpaste").focus();
+  }));
   $("dpaste").addEventListener("input", recomputeDirect);
   $("dclear").addEventListener("click", () => { $("dpaste").value = ""; recomputeDirect(); $("dpaste").focus(); });
   $("dbook").addEventListener("input", recomputeDirect);
