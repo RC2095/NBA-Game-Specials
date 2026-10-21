@@ -822,7 +822,7 @@
    * Returns { players: [{name, lines: [{line, over, under}]}], errors: [] }.
    * Anything that can't be read is reported, never guessed.
    */
-  function parseOverUnderPaste(text) {
+  function parseOverUnderStrict(text) {
     const errors = [];
     const players = [];
     const byName = new Map();
@@ -942,6 +942,132 @@
   }
 
   /*
+   * Reads a paste copied straight off a sportsbook page and rewrites it into
+   * the plain shape the strict parser above reads:
+   *
+   *   Jayson Tatum
+   *   O 26.5-114
+   *   U 26.5-114
+   *
+   * Handled: Over/Under on their own lines or all on one line, the line
+   * before or after the side word ("26.5 Over -114", "Over 26.5 -114",
+   * "O26.5-114"), an Over price followed by an Under price with no side
+   * words ("Tatum 26.5 -114 -114"), markdown links, the real minus sign,
+   * non-breaking spaces, EVEN, bullets and pipes, and stray rows such as
+   * "BOS @ DET", times and column headers. Several lines for one player
+   * (alt lines) work too.
+   *
+   * Nothing is guessed: a price with no line, or a side with no price, is
+   * reported in `problems` and left out.
+   */
+  const OU_STOP = new Set([
+    "points", "point", "rebounds", "rebound", "assists", "assist", "pts", "reb", "ast", "pra", "player", "players",
+    "props", "prop", "odds", "line", "lines", "alt", "alternate", "more", "less", "total", "totals", "over", "under",
+    "yes", "no", "o/u", "ou", "spread", "moneyline", "game", "lines.", "market", "markets", "popular", "all", "show",
+    "hide", "view", "bet", "bets", "slip", "live", "today", "tonight", "vs", "at", "pick", "picks",
+  ]);
+
+  function normalizeOverUnderPaste(text) {
+    const problems = [];
+    let t = String(text)
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/[\u2212\u2013\u2014\u2012]/g, "-")
+      .replace(/[\u00a0\u2009\u202f]/g, " ")
+      .replace(/[\u2022\u00b7|]/g, " ")
+      .replace(/\b(even|evens|ev)\b/gi, "+100")
+      .replace(/\b(over|under|o|u)(?=\d)/gi, "$1 ")
+      .replace(/(\d(?:\.\d+)?)(?=[+-]\d{3,4}\b)/g, "$1 ");
+
+    const out = [];            // canonical rows, with a name row before a player's first row
+    let name = null, nameEmitted = false;
+    let side = null, line = null, unsided = [];
+
+    function flushUnsided() {
+      if (unsided.length) {
+        problems.push((name || "A player") + ": a price (" + unsided.join(", ") + ") has no Over/Under label and no partner.");
+        unsided = [];
+      }
+    }
+    function startPlayer(n) {
+      flushUnsided();
+      if (name && side && line === null) problems.push(name + ": an " + (side === "O" ? "Over" : "Under") + " has no line or price.");
+      name = n; nameEmitted = false; side = null; line = null; unsided = [];
+    }
+    function emit(sd, ln, price) {
+      if (!name) { problems.push("A price (" + price + ") appears before any player name."); return; }
+      if (!nameEmitted) { out.push(name); nameEmitted = true; }
+      out.push(sd + " " + ln + (price > 0 ? "+" : "") + price);
+    }
+    function acceptName(phrase) {
+      const words = phrase.split(/\s+/).filter(Boolean);
+      if (!words.length) return null;
+      if (!/^[A-Za-z\u00C0-\u024F.'\u2019 -]+$/.test(phrase)) return null;
+      if (words.some((w) => /^[-.]+$/.test(w))) return null;
+      if (words.every((w) => OU_STOP.has(w.toLowerCase().replace(/[.:]+$/, "")))) return null;
+      if (words.length === 1 && (words[0].length < 4 || words[0] === words[0].toUpperCase())) return null;
+      return words.join(" ");
+    }
+
+    String(t).split(/\r?\n/).forEach((raw) => {
+      const toks = raw.trim().split(/\s+/).filter(Boolean);
+      let phrase = [];
+      const closePhrase = () => {
+        if (!phrase.length) return;
+        const n = acceptName(phrase.join(" "));
+        phrase = [];
+        if (n) startPlayer(n);
+      };
+      toks.forEach((tok) => {
+        if (/^(over|under|o|u)$/i.test(tok)) {
+          closePhrase();
+          flushUnsided();
+          side = tok[0].toUpperCase();
+        } else if (/^[+-]\d{3,4}$/.test(tok)) {
+          closePhrase();
+          const price = parseInt(tok, 10);
+          if (side && line !== null) { emit(side, line, price); side = null; }
+          else if (!side && line !== null) {
+            unsided.push(price);
+            if (unsided.length === 2) { emit("O", line, unsided[0]); emit("U", line, unsided[1]); unsided = []; }
+          } else {
+            problems.push((name || "A player") + ": a price (" + price + ") has no line.");
+            side = null;
+          }
+        } else if (/^\d+(?:\.\d+)?$/.test(tok)) {
+          closePhrase();
+          flushUnsided();
+          line = tok.indexOf(".") === -1 ? String(parseFloat(tok)) : String(parseFloat(tok));
+        } else if (/\d/.test(tok) || /^[@/:()]+$/.test(tok) || tok.toLowerCase() === "o/u") {
+          closePhrase();           // times, records, "o/u": noise that also ends a name phrase
+        } else {
+          phrase.push(tok);
+        }
+      });
+      closePhrase();
+    });
+    flushUnsided();
+    if (side) problems.push((name || "A player") + ": a trailing " + (side === "O" ? "Over" : "Under") + " has no price.");
+    return { text: out.join("\n") + (out.length ? "\n" : ""), problems: problems };
+  }
+
+  function countLines(r) {
+    return r.players.reduce((n, p) => n + p.lines.length, 0);
+  }
+
+  // Strict first (so a clean paste behaves exactly as before and keeps its
+  // line numbers); otherwise try the reformatted paste and use it only if it reads more lines.
+  function parseOverUnderPaste(text) {
+    const strict = parseOverUnderStrict(text);
+    if (!strict.errors.length && strict.players.length) return strict;
+    const norm = normalizeOverUnderPaste(text);
+    if (!norm.text) return strict;
+    const r = parseOverUnderStrict(norm.text);
+    const errors = norm.problems.concat(r.errors.map((e) => e.replace(/^Line \d+: /, "")));
+    if (!(countLines(r) > countLines(strict))) return strict;
+    return { players: r.players, errors: errors, reformatted: true };
+  }
+
+  /*
    * A team's (or the game total's) lines: O/U pairs with no player name.
    *   O 99.5-110
    *   U 99.5-110
@@ -1030,65 +1156,100 @@
    * if the book posts it, a No price.
    *   Nikola Jokic, -250, +190      Nikola Jokic -250 +190      Nikola Jokic -250
    */
-  // The sportsbook's copied text puts the market on the name ("Jalen Duren
-  // Double-Double"), a "[Yes](link)" label on its own line, then the price on
-  // the next line, and uses a real minus sign. Rewrite that into one
-  // "Name price" (or "Name yes no") row per player so the parser below can
-  // read it. Text already in the "Name price" form passes through unchanged
-  // apart from the minus sign.
+  // Rewrites text copied straight off a book page into one "Name yes [no]" row
+  // per player. Handled: the name with its market on the end ("Jalen Duren
+  // Double-Double"), Yes / No labels on their own lines or inline ("Yes -250
+  // No +190", "Yes: -250"), the price on the line after the name or on the
+  // same line, two prices with no labels (Yes then No), commas, markdown
+  // links, the real minus sign, non-breaking spaces, EVEN, bullets and
+  // pipes, and stray rows such as team names, times or column headers.
+  // Anything unreadable is returned in `problems`, never guessed.
   const MARKET_SUFFIX = /\s+(double[- ]double|triple[- ]double|to foul out|foul out|to be ejected|to be ejected from the game)\s*$/i;
-  function normalizeDirectPaste(text) {
-    const lines = String(text)
-      .replace(/[\u2212\u2013\u2014]/g, "-")
+  const DIRECT_STOP = new Set([
+    "player", "players", "props", "prop", "odds", "yes", "no", "double-double", "triple-double", "double", "triple",
+    "doubles", "market", "markets", "to", "record", "any", "all", "show", "hide", "view", "bet", "popular",
+    "points", "rebounds", "assists", "alt", "more", "less", "total", "totals", "live", "today", "tonight", "vs", "at",
+  ]);
+
+  function normalizeDirect(text) {
+    const problems = [];
+    const t = String(text)
       .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-      .split(/\r?\n/)
-      .map((l) => l.trim());
-    const isLabel = (l) => /^(yes|no)$/i.test(l);
-    if (!lines.some(isLabel)) {
-      // Name on one line, price on the next ("Jalen Duren" / "-128").
-      const bare = (l) => /^[+-]\s*\d+$/.test(l);
-      const out = [];
-      let pending = null;
-      for (const l of lines) {
-        if (!l) continue;
-        if (bare(l) && pending !== null) { pending.prices.push(l.replace(/\s+/g, "")); continue; }
-        if (pending !== null) { out.push(pending.name + " " + pending.prices.join(" ")); pending = null; }
-        if (bare(l)) { out.push(l); continue; }
-        if (/[+-]\s*\d+$/.test(l)) { out.push(l); continue; }
-        pending = { name: l.replace(MARKET_SUFFIX, "").trim(), prices: [] };
-      }
-      if (pending !== null) out.push(pending.name + " " + pending.prices.join(" "));
-      return out.join("\n");
-    }
+      .replace(/[−–—‒]/g, "-")
+      .replace(/[   ]/g, " ")
+      .replace(/[•·|]/g, " ")
+      .replace(/\b(even|evens|ev)\b/gi, "+100")
+      .replace(/[,;\t]/g, " ")
+      .replace(/\b(yes|no)\s*:/gi, "$1 ");
     const rows = [];
-    let cur = null;
-    const flush = () => {
-      if (cur && cur.yes !== null) rows.push(cur.name + " " + cur.yes + (cur.no !== null ? " " + cur.no : ""));
-      else if (cur) rows.push(cur.name);
-      cur = null;
-    };
-    for (let i = 0; i < lines.length; i++) {
-      const l = lines[i];
-      if (!l) continue;
-      if (isLabel(l)) {
-        const price = lines[i + 1] || "";
-        if (cur && /^[+-]\s*\d+$/.test(price)) {
-          if (/^yes$/i.test(l)) cur.yes = price.replace(/\s+/g, ""); else cur.no = price.replace(/\s+/g, "");
-          i += 1;
-        }
-        continue;
-      }
-      if (/^[+-]\s*\d+$/.test(l)) continue;
-      flush();
-      cur = { name: l.replace(MARKET_SUFFIX, "").trim(), yes: null, no: null };
+    let cur = null;      // { name, yes, no, label, poisoned }
+    let pendingLabel = null;
+
+    function acceptName(words) {
+      let phrase = words.join(" ").replace(MARKET_SUFFIX, "").trim();
+      if (!phrase) return null;
+      if (!/^[A-Za-zÀ-ɏ.'’ -]+$/.test(phrase)) return null;
+      const ws = phrase.split(/\s+/);
+      if (ws.some((w) => /^[-.]+$/.test(w))) return null;
+      if (ws.every((w) => DIRECT_STOP.has(w.toLowerCase().replace(/[.:]+$/, "")))) return null;
+      if (ws.length === 1 && /^[A-Z]{2,4}$/.test(ws[0])) return null;     // team codes such as BOS
+      return phrase;
     }
+    function flush() {
+      if (!cur) return;
+      if (cur.poisoned) { cur = null; return; }
+      if (cur.yes === null && cur.no !== null) problems.push(cur.name + ": only a No price was found; a Yes price is needed.");
+      else if (cur.yes === null) problems.push(cur.name + ": no Yes price was found.");
+      else rows.push(cur.name + " " + cur.yes + (cur.no !== null ? " " + cur.no : ""));
+      cur = null;
+    }
+    function givePrice(tok) {
+      if (!cur) { problems.push("A price (" + tok + ") appears before any player name."); pendingLabel = null; return; }
+      if (cur.poisoned) { pendingLabel = null; return; }
+      const label = pendingLabel; pendingLabel = null;
+      if (label === "no") {
+        if (cur.no !== null) { problems.push(cur.name + ": more than one No price."); cur.poisoned = true; }
+        else cur.no = tok;
+      } else if (label === "yes") {
+        if (cur.yes !== null) { problems.push(cur.name + ": more than one Yes price."); cur.poisoned = true; }
+        else cur.yes = tok;
+      } else if (cur.yes === null) cur.yes = tok;
+      else if (cur.no === null) cur.no = tok;
+      else { problems.push(cur.name + ": more than two prices."); cur.poisoned = true; }
+    }
+
+    t.split(/\r?\n/).forEach((raw) => {
+      const toks = raw.trim().split(/\s+/).filter(Boolean);
+      let phrase = [];
+      const closePhrase = () => {
+        if (!phrase.length) return;
+        const n = acceptName(phrase);
+        phrase = [];
+        if (n) { flush(); cur = { name: n, yes: null, no: null, poisoned: false }; pendingLabel = null; }
+      };
+      toks.forEach((tok) => {
+        if (/^(yes|no)$/i.test(tok)) { closePhrase(); pendingLabel = tok.toLowerCase(); }
+        else if (/^[+-]\d{3,4}$/.test(tok)) { closePhrase(); givePrice(tok); }
+        else if (/^[+-]\d+$/.test(tok)) {
+          closePhrase();
+          problems.push((cur ? cur.name + ": " : "") + tok + " isn't a real American price (must be +100 or higher, or -100 or lower).");
+          if (cur) cur.poisoned = true;
+          pendingLabel = null;
+        } else if (/\d/.test(tok) || /^[@/:()]+$/.test(tok)) closePhrase();
+        else phrase.push(tok);
+      });
+      closePhrase();
+    });
     flush();
-    return rows.join("\n");
+    return { text: rows.join("\n"), problems: problems };
   }
 
+  function normalizeDirectPaste(text) { return normalizeDirect(text).text; }
+
   function parseDirectPaste(text) {
-    text = normalizeDirectPaste(text);
-    const errors = [];
+    const norm = normalizeDirect(text);
+    text = norm.text;
+    const errors = norm.problems.slice();
     const entries = [];
     const seen = new Set();
     const re = /^(.*?)[\s,:;\t]+([+\-]\s*\d+)(?:[\s,;\t]+([+\-]\s*\d+))?$/;
@@ -1360,7 +1521,7 @@
     quarterTeamMeans: quarterTeamMeans, fullGameTeamMedian: fullGameTeamMedian,
     threeQuarterTeamMeans: threeQuarterTeamMeans, priceThreeQuarterTeams: priceThreeQuarterTeams,
     // parsing + roster pricing
-    parseOverUnderPaste: parseOverUnderPaste,
+    parseOverUnderPaste: parseOverUnderPaste, normalizeOverUnderPaste: normalizeOverUnderPaste,
     parseMilestonePaste: parseMilestonePaste,
     parseLadderPaste: parseLadderPaste,
     parseDirectPaste: parseDirectPaste,

@@ -383,7 +383,7 @@
   }
 
   document.querySelectorAll('input[name="stat"]').forEach((r) =>
-    r.addEventListener("change", () => { state.stat = r.value; recomputeAny(); }));
+    r.addEventListener("change", () => { state.stat = r.value; $("paste").value = ""; recomputeAny(); $("paste").focus(); }));
   document.querySelectorAll('input[name="mode"]').forEach((r) =>
     r.addEventListener("change", () => { state.mode = r.value; recomputeAny(); }));
   $("paste").addEventListener("input", recomputeAny);
