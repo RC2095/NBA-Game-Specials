@@ -976,7 +976,7 @@
       .replace(/[\u2022\u00b7|]/g, " ")
       .replace(/\b(even|evens|ev)\b/gi, "+100")
       .replace(/\b(over|under|o|u)(?=\d)/gi, "$1 ")
-      .replace(/(\d(?:\.\d+)?)(?=[+-]\d{3,4}\b)/g, "$1 ");
+      .replace(/(\d(?:\.\d+)?)(?=[+-]\d{3,6}\b)/g, "$1 ");
 
     const out = [];            // canonical rows, with a name row before a player's first row
     let name = null, nameEmitted = false;
@@ -1022,7 +1022,7 @@
           closePhrase();
           flushUnsided();
           side = tok[0].toUpperCase();
-        } else if (/^[+-]\d{3,4}$/.test(tok)) {
+        } else if (/^[+-]\d{3,6}$/.test(tok)) {
           closePhrase();
           const price = parseInt(tok, 10);
           if (side && line !== null) { emit(side, line, price); side = null; }
@@ -1169,6 +1169,7 @@
     "player", "players", "props", "prop", "odds", "yes", "no", "double-double", "triple-double", "double", "triple",
     "doubles", "market", "markets", "to", "record", "any", "all", "show", "hide", "view", "bet", "popular",
     "points", "rebounds", "assists", "alt", "more", "less", "total", "totals", "live", "today", "tonight", "vs", "at",
+    "image", "images", "logo", "photo", "headshot", "boost", "boosted", "popular",
   ]);
 
   function normalizeDirect(text) {
@@ -1186,7 +1187,9 @@
     let pendingLabel = null;
 
     function acceptName(words) {
-      let phrase = words.join(" ").replace(MARKET_SUFFIX, "").trim();
+      const full = words.join(" ");
+      let phrase = full.replace(MARKET_SUFFIX, "").trim();
+      acceptName.strong = phrase !== full.trim();      // the market sits on the name: "Jalen Duren Triple-Double"
       if (!phrase) return null;
       if (!/^[A-Za-zÀ-ɏ.'’ -]+$/.test(phrase)) return null;
       const ws = phrase.split(/\s+/);
@@ -1224,12 +1227,17 @@
       const closePhrase = () => {
         if (!phrase.length) return;
         const n = acceptName(phrase);
+        const strong = acceptName.strong;
         phrase = [];
-        if (n) { flush(); cur = { name: n, yes: null, no: null, poisoned: false }; pendingLabel = null; }
+        if (!n) return;
+        // A name that carries its market ("... Triple-Double") and has no price yet is
+        // waiting for one: a plain text line before the price ("player image") is junk.
+        if (cur && !strong && cur.strong && cur.yes === null && cur.no === null && !cur.poisoned) return;
+        flush(); cur = { name: n, yes: null, no: null, poisoned: false, strong: strong }; pendingLabel = null;
       };
       toks.forEach((tok) => {
         if (/^(yes|no)$/i.test(tok)) { closePhrase(); pendingLabel = tok.toLowerCase(); }
-        else if (/^[+-]\d{3,4}$/.test(tok)) { closePhrase(); givePrice(tok); }
+        else if (/^[+-]\d{3,6}$/.test(tok)) { closePhrase(); givePrice(tok); }
         else if (/^[+-]\d+$/.test(tok)) {
           closePhrase();
           problems.push((cur ? cur.name + ": " : "") + tok + " isn't a real American price (must be +100 or higher, or -100 or lower).");
