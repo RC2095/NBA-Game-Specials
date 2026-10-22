@@ -5,7 +5,7 @@
 // regular season), so with these files it averages every game since 2024-25.
 // Data pasted into the page's "Team data" box overrides this for that browser.
 window.TEAM_FOULS_DATA = {
- "as_of": "2026-04-12",
+ "as_of": "2026-10-20",
  "teams": {
   "ATL": {
    "last10": 19.8,
@@ -20,10 +20,10 @@ window.TEAM_FOULS_DATA = {
    "last_game": "2026-04-12"
   },
   "BOS": {
-   "last10": 18.3,
-   "season": 17.47,
-   "games_this_season": 164,
-   "last_game": "2026-04-12"
+   "last10": 18.9,
+   "season": 17.521,
+   "games_this_season": 165,
+   "last_game": "2026-10-20"
   },
   "CHA": {
    "last10": 18.3,
@@ -56,10 +56,10 @@ window.TEAM_FOULS_DATA = {
    "last_game": "2026-04-12"
   },
   "DET": {
-   "last10": 20.8,
-   "season": 21.329,
-   "games_this_season": 164,
-   "last_game": "2026-04-12"
+   "last10": 21.2,
+   "season": 21.333,
+   "games_this_season": 165,
+   "last_game": "2026-10-20"
   },
   "GSW": {
    "last10": 18.3,
@@ -122,16 +122,16 @@ window.TEAM_FOULS_DATA = {
    "last_game": "2026-04-12"
   },
   "NYK": {
-   "last10": 19.2,
-   "season": 18.567,
-   "games_this_season": 164,
-   "last_game": "2026-04-12"
+   "last10": 19.6,
+   "season": 18.588,
+   "games_this_season": 165,
+   "last_game": "2026-10-20"
   },
   "OKC": {
    "last10": 18.5,
-   "season": 19.427,
-   "games_this_season": 164,
-   "last_game": "2026-04-12"
+   "season": 19.442,
+   "games_this_season": 165,
+   "last_game": "2026-10-20"
   },
   "ORL": {
    "last10": 21.3,
@@ -140,10 +140,10 @@ window.TEAM_FOULS_DATA = {
    "last_game": "2026-04-12"
   },
   "PHI": {
-   "last10": 20.0,
-   "season": 19.652,
-   "games_this_season": 164,
-   "last_game": "2026-04-12"
+   "last10": 19.9,
+   "season": 19.673,
+   "games_this_season": 165,
+   "last_game": "2026-10-20"
   },
   "PHX": {
    "last10": 19.0,
@@ -164,10 +164,10 @@ window.TEAM_FOULS_DATA = {
    "last_game": "2026-04-12"
   },
   "SAN": {
-   "last10": 17.0,
-   "season": 17.759,
-   "games_this_season": 162,
-   "last_game": "2026-04-12"
+   "last10": 17.7,
+   "season": 17.798,
+   "games_this_season": 163,
+   "last_game": "2026-10-20"
   },
   "TOR": {
    "last10": 20.0,
