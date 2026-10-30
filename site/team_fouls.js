@@ -5,13 +5,13 @@
 // regular season), so with these files it averages every game since 2024-25.
 // Data pasted into the page's "Team data" box overrides this for that browser.
 window.TEAM_FOULS_DATA = {
- "as_of": "2026-10-27",
+ "as_of": "2026-10-28",
  "teams": {
   "ATL": {
-   "last10": 22.3,
-   "season": 19.497,
-   "games_this_season": 167,
-   "last_game": "2026-10-26"
+   "last10": 21.8,
+   "season": 19.524,
+   "games_this_season": 168,
+   "last_game": "2026-10-28"
   },
   "BKN": {
    "last10": 22.4,
@@ -26,22 +26,22 @@ window.TEAM_FOULS_DATA = {
    "last_game": "2026-10-27"
   },
   "CHA": {
-   "last10": 18.0,
-   "season": 18.928,
-   "games_this_season": 166,
-   "last_game": "2026-10-26"
+   "last10": 18.4,
+   "season": 18.952,
+   "games_this_season": 167,
+   "last_game": "2026-10-28"
   },
   "CHI": {
-   "last10": 23.3,
-   "season": 18.506,
-   "games_this_season": 168,
-   "last_game": "2026-10-26"
+   "last10": 23.1,
+   "season": 18.521,
+   "games_this_season": 169,
+   "last_game": "2026-10-28"
   },
   "CLE": {
-   "last10": 19.1,
-   "season": 18.964,
-   "games_this_season": 167,
-   "last_game": "2026-10-26"
+   "last10": 18.8,
+   "season": 18.946,
+   "games_this_season": 168,
+   "last_game": "2026-10-28"
   },
   "DAL": {
    "last10": 21.7,
@@ -50,46 +50,46 @@ window.TEAM_FOULS_DATA = {
    "last_game": "2026-10-26"
   },
   "DEN": {
-   "last10": 19.8,
-   "season": 18.449,
-   "games_this_season": 167,
-   "last_game": "2026-10-26"
+   "last10": 19.9,
+   "season": 18.452,
+   "games_this_season": 168,
+   "last_game": "2026-10-28"
   },
   "DET": {
-   "last10": 20.9,
-   "season": 21.375,
-   "games_this_season": 168,
-   "last_game": "2026-10-27"
+   "last10": 21.4,
+   "season": 21.391,
+   "games_this_season": 169,
+   "last_game": "2026-10-28"
   },
   "GSW": {
-   "last10": 19.5,
-   "season": 19.47,
-   "games_this_season": 168,
-   "last_game": "2026-10-26"
+   "last10": 19.9,
+   "season": 19.497,
+   "games_this_season": 169,
+   "last_game": "2026-10-28"
   },
   "HOU": {
-   "last10": 19.4,
-   "season": 18.695,
-   "games_this_season": 167,
-   "last_game": "2026-10-26"
+   "last10": 19.2,
+   "season": 18.679,
+   "games_this_season": 168,
+   "last_game": "2026-10-28"
   },
   "IND": {
-   "last10": 18.4,
-   "season": 19.821,
-   "games_this_season": 168,
-   "last_game": "2026-10-26"
+   "last10": 18.8,
+   "season": 19.834,
+   "games_this_season": 169,
+   "last_game": "2026-10-28"
   },
   "LAC": {
-   "last10": 20.4,
-   "season": 18.699,
-   "games_this_season": 166,
-   "last_game": "2026-10-25"
+   "last10": 21.3,
+   "season": 18.731,
+   "games_this_season": 167,
+   "last_game": "2026-10-28"
   },
   "LAL": {
-   "last10": 19.6,
-   "season": 18.102,
-   "games_this_season": 166,
-   "last_game": "2026-10-27"
+   "last10": 20.7,
+   "season": 18.12,
+   "games_this_season": 167,
+   "last_game": "2026-10-28"
   },
   "MEM": {
    "last10": 24.5,
@@ -98,34 +98,34 @@ window.TEAM_FOULS_DATA = {
    "last_game": "2026-10-26"
   },
   "MIA": {
-   "last10": 19.5,
-   "season": 17.321,
-   "games_this_season": 168,
-   "last_game": "2026-10-26"
+   "last10": 19.6,
+   "season": 17.32,
+   "games_this_season": 169,
+   "last_game": "2026-10-28"
   },
   "MIL": {
-   "last10": 21.8,
-   "season": 19.018,
-   "games_this_season": 167,
-   "last_game": "2026-10-26"
+   "last10": 21.7,
+   "season": 19.024,
+   "games_this_season": 168,
+   "last_game": "2026-10-28"
   },
   "MIN": {
-   "last10": 21.9,
-   "season": 19.798,
-   "games_this_season": 168,
-   "last_game": "2026-10-26"
+   "last10": 22.7,
+   "season": 19.852,
+   "games_this_season": 169,
+   "last_game": "2026-10-28"
   },
   "NOP": {
-   "last10": 23.1,
-   "season": 19.283,
-   "games_this_season": 166,
-   "last_game": "2026-10-24"
+   "last10": 23.4,
+   "season": 19.293,
+   "games_this_season": 167,
+   "last_game": "2026-10-28"
   },
   "NYK": {
-   "last10": 20.2,
-   "season": 18.661,
-   "games_this_season": 168,
-   "last_game": "2026-10-27"
+   "last10": 20.6,
+   "season": 18.686,
+   "games_this_season": 169,
+   "last_game": "2026-10-28"
   },
   "OKC": {
    "last10": 18.2,
@@ -134,16 +134,16 @@ window.TEAM_FOULS_DATA = {
    "last_game": "2026-10-25"
   },
   "ORL": {
-   "last10": 22.8,
-   "season": 20.663,
-   "games_this_season": 166,
-   "last_game": "2026-10-25"
+   "last10": 23.0,
+   "season": 20.695,
+   "games_this_season": 167,
+   "last_game": "2026-10-28"
   },
   "PHI": {
-   "last10": 20.3,
-   "season": 19.732,
-   "games_this_season": 168,
-   "last_game": "2026-10-25"
+   "last10": 21.7,
+   "season": 19.793,
+   "games_this_season": 169,
+   "last_game": "2026-10-28"
   },
   "PHX": {
    "last10": 19.2,
@@ -164,28 +164,28 @@ window.TEAM_FOULS_DATA = {
    "last_game": "2026-10-27"
   },
   "SAN": {
-   "last10": 19.5,
-   "season": 17.825,
-   "games_this_season": 166,
-   "last_game": "2026-10-27"
+   "last10": 19.2,
+   "season": 17.826,
+   "games_this_season": 167,
+   "last_game": "2026-10-28"
   },
   "TOR": {
-   "last10": 21.9,
-   "season": 21.144,
-   "games_this_season": 167,
-   "last_game": "2026-10-25"
+   "last10": 22.5,
+   "season": 21.179,
+   "games_this_season": 168,
+   "last_game": "2026-10-28"
   },
   "UTA": {
-   "last10": 19.5,
-   "season": 20.144,
-   "games_this_season": 167,
-   "last_game": "2026-10-26"
+   "last10": 19.1,
+   "season": 20.131,
+   "games_this_season": 168,
+   "last_game": "2026-10-28"
   },
   "WAS": {
-   "last10": 21.3,
-   "season": 20.659,
-   "games_this_season": 167,
-   "last_game": "2026-10-26"
+   "last10": 20.7,
+   "season": 20.649,
+   "games_this_season": 168,
+   "last_game": "2026-10-28"
   }
  }
 };
