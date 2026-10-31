@@ -5,7 +5,7 @@
 // regular season), so with these files it averages every game since 2024-25.
 // Data pasted into the page's "Team data" box overrides this for that browser.
 window.TEAM_FOULS_DATA = {
- "as_of": "2026-10-28",
+ "as_of": "2026-10-29",
  "teams": {
   "ATL": {
    "last10": 21.8,
@@ -92,10 +92,10 @@ window.TEAM_FOULS_DATA = {
    "last_game": "2026-10-28"
   },
   "MEM": {
-   "last10": 24.5,
-   "season": 20.821,
-   "games_this_season": 168,
-   "last_game": "2026-10-26"
+   "last10": 23.7,
+   "season": 20.834,
+   "games_this_season": 169,
+   "last_game": "2026-10-29"
   },
   "MIA": {
    "last10": 19.6,
@@ -116,10 +116,10 @@ window.TEAM_FOULS_DATA = {
    "last_game": "2026-10-28"
   },
   "NOP": {
-   "last10": 23.4,
-   "season": 19.293,
-   "games_this_season": 167,
-   "last_game": "2026-10-28"
+   "last10": 22.6,
+   "season": 19.256,
+   "games_this_season": 168,
+   "last_game": "2026-10-29"
   },
   "NYK": {
    "last10": 20.6,
@@ -152,16 +152,16 @@ window.TEAM_FOULS_DATA = {
    "last_game": "2026-10-24"
   },
   "POR": {
-   "last10": 19.5,
-   "season": 19.485,
-   "games_this_season": 167,
-   "last_game": "2026-10-27"
+   "last10": 18.5,
+   "season": 19.452,
+   "games_this_season": 168,
+   "last_game": "2026-10-29"
   },
   "SAC": {
    "last10": 21.1,
-   "season": 19.381,
-   "games_this_season": 168,
-   "last_game": "2026-10-27"
+   "season": 19.396,
+   "games_this_season": 169,
+   "last_game": "2026-10-29"
   },
   "SAN": {
    "last10": 19.2,
